@@ -15,7 +15,6 @@ class AddStudentFragment(private val onStudentAdded: (StudentModel) -> Unit) : F
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Inflate the fragment layout
         val view = inflater.inflate(R.layout.fragment_add_student, container, false)
 
         val inputStudentName = view.findViewById<EditText>(R.id.input_student_name_frag)
@@ -23,7 +22,6 @@ class AddStudentFragment(private val onStudentAdded: (StudentModel) -> Unit) : F
         val btnSave = view.findViewById<Button>(R.id.btn_save_frag)
         val btnCancel = view.findViewById<Button>(R.id.btn_cancel_frag)
 
-        // Handle the "Save" button click
         btnSave.setOnClickListener {
             val studentName = inputStudentName.text.toString()
             val studentId = inputStudentId.text.toString()
@@ -38,9 +36,8 @@ class AddStudentFragment(private val onStudentAdded: (StudentModel) -> Unit) : F
             }
         }
 
-        // Handle the "Cancel" button click
         btnCancel.setOnClickListener {
-            parentFragmentManager.popBackStack() // Close the fragment
+            parentFragmentManager.popBackStack()
         }
 
         return view

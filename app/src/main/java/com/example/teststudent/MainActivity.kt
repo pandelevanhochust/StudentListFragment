@@ -158,13 +158,10 @@ class MainActivity : AppCompatActivity() {
                 findViewById<RecyclerView>(R.id.recycler_view_students).visibility = View.GONE
                 findViewById<FrameLayout>(R.id.fragment_container).visibility = View.VISIBLE
 
-                // Open the AddStudentFragment
                 val fragment = AddStudentFragment { newStudent ->
-                    // Add new student to the list
                     students.add(newStudent)
                     studentAdapter.notifyItemInserted(students.size - 1)
 
-                    // Close fragment and show RecyclerView
                     supportFragmentManager.popBackStack()
                     findViewById<RecyclerView>(R.id.recycler_view_students).visibility = View.VISIBLE
                     findViewById<FrameLayout>(R.id.fragment_container).visibility = View.GONE
@@ -185,17 +182,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onContextItemSelected(item: MenuItem): Boolean {
-        val position = studentAdapter.getSelectedPosition() // Get the selected position
+        val position = studentAdapter.getSelectedPosition()
         return when (item.itemId) {
             R.id.edit -> {
                 val studentToEdit = students[position]
                 val fragment = EditStudentFragment.newInstance(
                     studentToEdit = studentToEdit,
                     onStudentUpdated = { updatedStudent ->
-                        // Update the student and notify the adapter
                         students[position] = updatedStudent
                         studentAdapter.notifyItemChanged(position)
-                        // Show RecyclerView and hide the fragment
                         findViewById<RecyclerView>(R.id.recycler_view_students).visibility = View.VISIBLE
                         findViewById<FrameLayout>(R.id.fragment_container).visibility = View.GONE
                     }
@@ -205,7 +200,6 @@ class MainActivity : AppCompatActivity() {
             }
 
             R.id.delete -> {
-                // Delete the selected student
                 deleteStudent(students[position], position)
                 true
             }
@@ -215,11 +209,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun openFragment(fragment: Fragment) {
-        // Hide RecyclerView and show the Fragment container
         findViewById<RecyclerView>(R.id.recycler_view_students).visibility = View.GONE
         findViewById<FrameLayout>(R.id.fragment_container).visibility = View.VISIBLE
 
-        // Open the fragment
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragment_container, fragment)
             .addToBackStack(null)
