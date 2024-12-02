@@ -37,29 +37,26 @@ class EditStudentFragment : Fragment() {
         val btnSave = view.findViewById<Button>(R.id.btn_save_frag_edit)
         val btnCancel = view.findViewById<Button>(R.id.btn_cancel_frag_edit)
 
-        // Pre-fill the fields with the current student data
         studentToEdit?.let {
             inputStudentName.setText(it.studentName)
             inputStudentId.setText(it.studentId)
         }
 
-        // Handle the "Save" button click
         btnSave.setOnClickListener {
             val updatedName = inputStudentName.text.toString()
             val updatedId = inputStudentId.text.toString()
 
             if (updatedName.isNotEmpty() && updatedId.isNotEmpty()) {
                 val updatedStudent = StudentModel(updatedName, updatedId)
-                onStudentUpdated?.invoke(updatedStudent) // Notify the activity
-                parentFragmentManager.popBackStack() // Close the fragment
+                onStudentUpdated?.invoke(updatedStudent)
+                parentFragmentManager.popBackStack()
             } else {
                 Toast.makeText(requireContext(), "Fields cannot be empty", Toast.LENGTH_SHORT).show()
             }
         }
 
-        // Handle the "Cancel" button click
         btnCancel.setOnClickListener {
-            parentFragmentManager.popBackStack() // Close the fragment
+            parentFragmentManager.popBackStack()
         }
 
         return view

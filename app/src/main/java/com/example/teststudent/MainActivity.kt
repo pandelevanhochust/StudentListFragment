@@ -11,11 +11,13 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.snackbar.Snackbar
 import android.widget.FrameLayout
 import androidx.fragment.app.Fragment
+import android.util.Log
+
 
 import android.widget.Button
 
 class MainActivity : AppCompatActivity() {
-
+    private lateinit var databaseHelper: StudentDatabaseHelper
     private lateinit var students: MutableList<StudentModel>
     private lateinit var studentAdapter: StudentAdapter
     private var lastDeletedStudent: StudentModel? = null
@@ -24,6 +26,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        databaseHelper = StudentDatabaseHelper(this)
 
         students = mutableListOf(
             StudentModel("Nguyễn Văn An", "SV001"),
@@ -48,6 +51,18 @@ class MainActivity : AppCompatActivity() {
             StudentModel("Lê Văn Vũ", "SV020")
         )
 
+        if (databaseHelper.getAllStudents().isEmpty()) {
+            // Add all students to the database
+            for (student in students) {
+                databaseHelper.addStudent(student)
+            }
+            Toast.makeText(this, "Predefined students added to database", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(this, "Students already exist in the database", Toast.LENGTH_SHORT).show()
+        }
+
+        students = databaseHelper.getAllStudents().toMutableList()
+
         studentAdapter = StudentAdapter(
             students,
             onEdit = { student, position -> showEditStudentDialog(student, position) },
@@ -61,7 +76,7 @@ class MainActivity : AppCompatActivity() {
         )
 
         val recyclerView = findViewById<RecyclerView>(R.id.recycler_view_students)
-        recyclerView.run {
+        recyclerView.apply {
             adapter = studentAdapter
             layoutManager = LinearLayoutManager(this@MainActivity)
         }
@@ -82,7 +97,9 @@ class MainActivity : AppCompatActivity() {
                 val name = nameInput.text.toString()
                 val id = idInput.text.toString()
                 if (name.isNotEmpty() && id.isNotEmpty()) {
-                    students[position] = StudentModel(name, id)
+                    val updatedStudent = StudentModel(name, id)
+                    databaseHelper.updateStudent(position.toLong(), updatedStudent)
+                    students[position] = updatedStudent
                     studentAdapter.notifyItemChanged(position)
                 } else {
                     Toast.makeText(this, "Fields cannot be empty", Toast.LENGTH_SHORT).show()
@@ -97,6 +114,7 @@ class MainActivity : AppCompatActivity() {
             .setTitle("Confirm Deletion")
             .setMessage("Are you sure you want to delete ${student.studentName}?")
             .setPositiveButton("Delete") { _, _ ->
+                databaseHelper.deleteStudent(position.toLong())
                 lastDeletedStudent = student
                 lastDeletedPosition = position
                 students.removeAt(position)
@@ -105,6 +123,7 @@ class MainActivity : AppCompatActivity() {
             }
             .setNegativeButton("Cancel", null)
             .show()
+
     }
 
     private fun showUndoSnackbar() {
@@ -127,44 +146,14 @@ class MainActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.add_student -> {
-//                val dialogView = layoutInflater.inflate(R.layout.dialog_add_edit_student, null)
-//                // Get references to the input fields
-//                val inputStudentName = dialogView.findViewById<EditText>(R.id.input_student_name)
-//                val inputStudentId = dialogView.findViewById<EditText>(R.id.input_student_id)
-//
-//                val builder = AlertDialog.Builder(this)
-//                builder.setTitle("Add Student")
-//                builder.setView(dialogView)
-//
-//                builder.setPositiveButton("Add") { dialog, _ ->
-//                    val studentName = inputStudentName.text.toString()
-//                    val studentId = inputStudentId.text.toString()
-//
-//                    if (studentName.isNotEmpty() && studentId.isNotEmpty()) {
-//                        val newStudent = StudentModel(studentName, studentId)
-//                        students.add(newStudent)
-//                        studentAdapter.notifyItemInserted(students.size - 1)
-//                        Toast.makeText(this, "Student added: $studentName ($studentId)", Toast.LENGTH_SHORT).show()
-//                    } else {
-//                        Toast.makeText(this, "Fields cannot be empty", Toast.LENGTH_SHORT).show()
-//                    }
-//                    dialog.dismiss()
-//                }
-//                builder.setNegativeButton("Cancel") { dialog, _ ->
-//                    dialog.cancel()
-//                }
-//                builder.show()
-
                 findViewById<RecyclerView>(R.id.recycler_view_students).visibility = View.GONE
                 findViewById<FrameLayout>(R.id.fragment_container).visibility = View.VISIBLE
 
-                // Open the AddStudentFragment
                 val fragment = AddStudentFragment { newStudent ->
-                    // Add new student to the list
+                    databaseHelper.addStudent(newStudent)
                     students.add(newStudent)
                     studentAdapter.notifyItemInserted(students.size - 1)
 
-                    // Close fragment and show RecyclerView
                     supportFragmentManager.popBackStack()
                     findViewById<RecyclerView>(R.id.recycler_view_students).visibility = View.VISIBLE
                     findViewById<FrameLayout>(R.id.fragment_container).visibility = View.GONE
@@ -185,17 +174,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onContextItemSelected(item: MenuItem): Boolean {
-        val position = studentAdapter.getSelectedPosition() // Get the selected position
+        val position = studentAdapter.getSelectedPosition()
         return when (item.itemId) {
             R.id.edit -> {
                 val studentToEdit = students[position]
                 val fragment = EditStudentFragment.newInstance(
                     studentToEdit = studentToEdit,
                     onStudentUpdated = { updatedStudent ->
-                        // Update the student and notify the adapter
                         students[position] = updatedStudent
                         studentAdapter.notifyItemChanged(position)
-                        // Show RecyclerView and hide the fragment
                         findViewById<RecyclerView>(R.id.recycler_view_students).visibility = View.VISIBLE
                         findViewById<FrameLayout>(R.id.fragment_container).visibility = View.GONE
                     }
@@ -205,7 +192,6 @@ class MainActivity : AppCompatActivity() {
             }
 
             R.id.delete -> {
-                // Delete the selected student
                 deleteStudent(students[position], position)
                 true
             }
@@ -215,11 +201,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun openFragment(fragment: Fragment) {
-        // Hide RecyclerView and show the Fragment container
         findViewById<RecyclerView>(R.id.recycler_view_students).visibility = View.GONE
         findViewById<FrameLayout>(R.id.fragment_container).visibility = View.VISIBLE
 
-        // Open the fragment
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragment_container, fragment)
             .addToBackStack(null)
