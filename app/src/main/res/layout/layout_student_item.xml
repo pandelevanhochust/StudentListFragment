@@ -4,27 +4,40 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="8dp"
-        android:orientation="vertical">
+        android:orientation="horizontal">
 
-    <!-- Student Name -->
     <TextView
             android:id="@+id/text_student_name"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:text="Student Name"
-            android:textSize="24sp"
-            android:textStyle="bold" />
+            android:textSize="16sp"
+            android:padding="8dp" />
 
-    <!-- Student ID -->
     <TextView
             android:id="@+id/text_student_id"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Student ID"
+            android:textSize="16sp"
+            android:padding="8dp" />
+
+    <ImageButton
+            android:id="@+id/button_edit"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Student ID"
-            android:textSize="20sp"
-            android:textStyle="italic" />
+            android:src="@drawable/baseline_edit_24"
+            android:contentDescription="Edit"
+            android:background="?android:attr/selectableItemBackground" />
 
-    <!-- Action Buttons -->
-
+    <ImageButton
+            android:id="@+id/button_delete"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/baseline_delete_24"
+            android:contentDescription="Delete"
+            android:background="?android:attr/selectableItemBackground" />
 
 </LinearLayout>

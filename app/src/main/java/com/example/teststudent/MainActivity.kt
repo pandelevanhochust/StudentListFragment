@@ -3,20 +3,22 @@ package com.example.teststudent
 import android.os.Bundle
 import android.view.*
 import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.teststudent.database.StudentDatabaseHelper
+import com.example.teststudent.data.StudentModel
 import com.google.android.material.snackbar.Snackbar
-import android.widget.FrameLayout
-import androidx.fragment.app.Fragment
-import android.util.Log
-
-
-import android.widget.Button
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : AppCompatActivity() {
+
     private lateinit var databaseHelper: StudentDatabaseHelper
     private lateinit var students: MutableList<StudentModel>
     private lateinit var studentAdapter: StudentAdapter
@@ -26,59 +28,65 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
         databaseHelper = StudentDatabaseHelper(this)
 
-        students = mutableListOf(
-            StudentModel("Nguyễn Văn An", "SV001"),
-            StudentModel("Trần Thị Bảo", "SV002"),
-            StudentModel("Lê Hoàng Cường", "SV003"),
-            StudentModel("Phạm Thị Dung", "SV004"),
-            StudentModel("Đỗ Minh Đức", "SV005"),
-            StudentModel("Vũ Thị Hoa", "SV006"),
-            StudentModel("Hoàng Văn Hải", "SV007"),
-            StudentModel("Bùi Thị Hạnh", "SV008"),
-            StudentModel("Đinh Văn Hùng", "SV009"),
-            StudentModel("Nguyễn Thị Linh", "SV010"),
-            StudentModel("Phạm Văn Long", "SV011"),
-            StudentModel("Trần Thị Mai", "SV012"),
-            StudentModel("Lê Thị Ngọc", "SV013"),
-            StudentModel("Vũ Văn Nam", "SV014"),
-            StudentModel("Hoàng Thị Phương", "SV015"),
-            StudentModel("Đỗ Văn Quân", "SV016"),
-            StudentModel("Nguyễn Thị Thu", "SV017"),
-            StudentModel("Trần Văn Tài", "SV018"),
-            StudentModel("Phạm Thị Tuyết", "SV019"),
-            StudentModel("Lê Văn Vũ", "SV020")
-        )
-
-        if (databaseHelper.getAllStudents().isEmpty()) {
-            // Add all students to the database
-            for (student in students) {
-                databaseHelper.addStudent(student)
-            }
-            Toast.makeText(this, "Predefined students added to database", Toast.LENGTH_SHORT).show()
-        } else {
-            Toast.makeText(this, "Students already exist in the database", Toast.LENGTH_SHORT).show()
-        }
-
-        students = databaseHelper.getAllStudents().toMutableList()
-
-        studentAdapter = StudentAdapter(
-            students,
-            onEdit = { student, position -> showEditStudentDialog(student, position) },
-            onDelete = { student, position -> deleteStudent(student, position) },
-            onShowContextMenu = { view, position ->
-                studentAdapter.setSelectedPosition(position)
-                registerForContextMenu(view)
-                openContextMenu(view)
-                unregisterForContextMenu(view)
-            }
-        )
-
+        // Initialize RecyclerView
         val recyclerView = findViewById<RecyclerView>(R.id.recycler_view_students)
-        recyclerView.apply {
-            adapter = studentAdapter
-            layoutManager = LinearLayoutManager(this@MainActivity)
+        recyclerView.layoutManager = LinearLayoutManager(this)
+
+        students = mutableListOf()
+
+        lifecycleScope.launch {
+            students.addAll(databaseHelper.getAllStudents())
+            if (students.isEmpty()) {
+                addPredefinedStudents()
+            }
+            studentAdapter = StudentAdapter(
+                students,
+                onEdit = { student, position -> showEditStudentDialog(student, position) },
+                onDelete = { student, position -> deleteStudent(student, position) },
+                onShowContextMenu = { view, position ->
+                    studentAdapter.setSelectedPosition(position)
+                    registerForContextMenu(view)
+                    openContextMenu(view)
+                    unregisterForContextMenu(view)
+                }
+            )
+            recyclerView.adapter = studentAdapter
+        }
+    }
+
+    private suspend fun addPredefinedStudents() = withContext(Dispatchers.IO) {
+        val predefinedStudents = listOf(
+            StudentModel(studentName = "Nguyễn Văn An", studentId = "SV001"),
+            StudentModel(studentName = "Trần Thị Bảo", studentId = "SV002"),
+            StudentModel(studentName = "Lê Hoàng Cường", studentId = "SV003"),
+            StudentModel(studentName = "Phạm Thị Dung", studentId = "SV004"),
+            StudentModel(studentName = "Đỗ Minh Đức", studentId = "SV005"),
+            StudentModel(studentName = "Vũ Thị Hoa", studentId = "SV006"),
+            StudentModel(studentName = "Hoàng Văn Hải", studentId = "SV007"),
+            StudentModel(studentName = "Bùi Thị Hạnh", studentId = "SV008"),
+            StudentModel(studentName = "Đinh Văn Hùng", studentId = "SV009"),
+            StudentModel(studentName = "Nguyễn Thị Linh", studentId = "SV010"),
+            StudentModel(studentName = "Phạm Văn Long", studentId = "SV011"),
+            StudentModel(studentName = "Trần Thị Mai", studentId = "SV012"),
+            StudentModel(studentName = "Lê Thị Ngọc", studentId = "SV013"),
+            StudentModel(studentName = "Vũ Văn Nam", studentId = "SV014"),
+            StudentModel(studentName = "Hoàng Thị Phương", studentId = "SV015"),
+            StudentModel(studentName = "Đỗ Văn Quân", studentId = "SV016"),
+            StudentModel(studentName = "Nguyễn Thị Thu", studentId = "SV017"),
+            StudentModel(studentName = "Trần Văn Tài", studentId = "SV018"),
+            StudentModel(studentName = "Phạm Thị Tuyết", studentId = "SV019"),
+            StudentModel(studentName = "Lê Văn Vũ", studentId = "SV020"),
+        )
+        for (student in predefinedStudents) {
+            databaseHelper.addStudent(student)
+        }
+        withContext(Dispatchers.Main) {
+            students.addAll(predefinedStudents)
+            studentAdapter.notifyDataSetChanged()
+            Toast.makeText(this@MainActivity, "Predefined students added to database", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -97,10 +105,12 @@ class MainActivity : AppCompatActivity() {
                 val name = nameInput.text.toString()
                 val id = idInput.text.toString()
                 if (name.isNotEmpty() && id.isNotEmpty()) {
-                    val updatedStudent = StudentModel(name, id)
-                    databaseHelper.updateStudent(position.toLong(), updatedStudent)
-                    students[position] = updatedStudent
-                    studentAdapter.notifyItemChanged(position)
+                    val updatedStudent = StudentModel(id = student.id, studentName = name, studentId = id)
+                    lifecycleScope.launch {
+                        databaseHelper.updateStudent(updatedStudent)
+                        students[position] = updatedStudent
+                        studentAdapter.notifyItemChanged(position)
+                    }
                 } else {
                     Toast.makeText(this, "Fields cannot be empty", Toast.LENGTH_SHORT).show()
                 }
@@ -114,25 +124,29 @@ class MainActivity : AppCompatActivity() {
             .setTitle("Confirm Deletion")
             .setMessage("Are you sure you want to delete ${student.studentName}?")
             .setPositiveButton("Delete") { _, _ ->
-                databaseHelper.deleteStudent(position.toLong())
-                lastDeletedStudent = student
-                lastDeletedPosition = position
-                students.removeAt(position)
-                studentAdapter.notifyItemRemoved(position)
-                showUndoSnackbar()
+                lifecycleScope.launch {
+                    databaseHelper.deleteStudent(student)
+                    lastDeletedStudent = student
+                    lastDeletedPosition = position
+                    students.removeAt(position)
+                    studentAdapter.notifyItemRemoved(position)
+                    showUndoSnackbar()
+                }
             }
             .setNegativeButton("Cancel", null)
             .show()
-
     }
 
     private fun showUndoSnackbar() {
         val view = findViewById<View>(R.id.main)
         Snackbar.make(view, "Student deleted", Snackbar.LENGTH_LONG)
             .setAction("Undo") {
-                lastDeletedStudent?.let {
-                    students.add(lastDeletedPosition!!, it)
-                    studentAdapter.notifyItemInserted(lastDeletedPosition!!)
+                lifecycleScope.launch {
+                    lastDeletedStudent?.let {
+                        databaseHelper.addStudent(it)
+                        students.add(lastDeletedPosition!!, it)
+                        studentAdapter.notifyItemInserted(lastDeletedPosition!!)
+                    }
                 }
             }
             .show()
@@ -150,13 +164,15 @@ class MainActivity : AppCompatActivity() {
                 findViewById<FrameLayout>(R.id.fragment_container).visibility = View.VISIBLE
 
                 val fragment = AddStudentFragment { newStudent ->
-                    databaseHelper.addStudent(newStudent)
-                    students.add(newStudent)
-                    studentAdapter.notifyItemInserted(students.size - 1)
+                    lifecycleScope.launch {
+                        databaseHelper.addStudent(newStudent)
+                        students.add(newStudent)
+                        studentAdapter.notifyItemInserted(students.size - 1)
 
-                    supportFragmentManager.popBackStack()
-                    findViewById<RecyclerView>(R.id.recycler_view_students).visibility = View.VISIBLE
-                    findViewById<FrameLayout>(R.id.fragment_container).visibility = View.GONE
+                        supportFragmentManager.popBackStack()
+                        findViewById<RecyclerView>(R.id.recycler_view_students).visibility = View.VISIBLE
+                        findViewById<FrameLayout>(R.id.fragment_container).visibility = View.GONE
+                    }
                 }
                 supportFragmentManager.beginTransaction()
                     .replace(R.id.fragment_container, fragment)
@@ -178,35 +194,15 @@ class MainActivity : AppCompatActivity() {
         return when (item.itemId) {
             R.id.edit -> {
                 val studentToEdit = students[position]
-                val fragment = EditStudentFragment.newInstance(
-                    studentToEdit = studentToEdit,
-                    onStudentUpdated = { updatedStudent ->
-                        students[position] = updatedStudent
-                        studentAdapter.notifyItemChanged(position)
-                        findViewById<RecyclerView>(R.id.recycler_view_students).visibility = View.VISIBLE
-                        findViewById<FrameLayout>(R.id.fragment_container).visibility = View.GONE
-                    }
-                )
-                openFragment(fragment)
+                showEditStudentDialog(studentToEdit, position)
                 true
             }
-
             R.id.delete -> {
                 deleteStudent(students[position], position)
                 true
             }
-
             else -> super.onContextItemSelected(item)
         }
     }
-
-    private fun openFragment(fragment: Fragment) {
-        findViewById<RecyclerView>(R.id.recycler_view_students).visibility = View.GONE
-        findViewById<FrameLayout>(R.id.fragment_container).visibility = View.VISIBLE
-
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.fragment_container, fragment)
-            .addToBackStack(null)
-            .commit()
-    }
 }
+

@@ -3,9 +3,10 @@ package com.example.teststudent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
+import android.widget.ImageButton
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.example.teststudent.data.StudentModel
 
 class StudentAdapter(
     private val students: MutableList<StudentModel>,
@@ -13,6 +14,7 @@ class StudentAdapter(
     private val onDelete: (StudentModel, Int) -> Unit,
     private val onShowContextMenu: (View, Int) -> Unit
 ) : RecyclerView.Adapter<StudentAdapter.StudentViewHolder>() {
+
     private var selectedPosition: Int = -1
 
     fun setSelectedPosition(position: Int) {
@@ -31,9 +33,20 @@ class StudentAdapter(
         holder.studentName.text = student.studentName
         holder.studentId.text = student.studentId
 
-        // Handle single click to show the context menu
-        holder.itemView.setOnClickListener {
+        // Edit button action
+        holder.editButton.setOnClickListener {
+            onEdit(student, position)
+        }
+
+        // Delete button action
+        holder.deleteButton.setOnClickListener {
+            onDelete(student, position)
+        }
+
+        // Show context menu on long click
+        holder.itemView.setOnLongClickListener {
             onShowContextMenu(holder.itemView, position)
+            true
         }
     }
 
@@ -42,5 +55,8 @@ class StudentAdapter(
     class StudentViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val studentName: TextView = itemView.findViewById(R.id.text_student_name)
         val studentId: TextView = itemView.findViewById(R.id.text_student_id)
+        val editButton: ImageButton = itemView.findViewById(R.id.button_edit)
+        val deleteButton: ImageButton = itemView.findViewById(R.id.button_delete)
     }
 }
+

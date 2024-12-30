@@ -8,6 +8,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import com.example.teststudent.data.StudentModel
 
 class AddStudentFragment(private val onStudentAdded: (StudentModel) -> Unit) : Fragment() {
 
@@ -27,8 +28,8 @@ class AddStudentFragment(private val onStudentAdded: (StudentModel) -> Unit) : F
             val studentId = inputStudentId.text.toString()
 
             if (studentName.isNotEmpty() && studentId.isNotEmpty()) {
-                val newStudent = StudentModel(studentName, studentId)
-                onStudentAdded(newStudent) // Add student to the list
+                val newStudent = StudentModel(id,studentName, studentId)
+                onStudentAdded(newStudent) // Pass the new student to the callback
                 Toast.makeText(requireContext(), "Student added: $studentName", Toast.LENGTH_SHORT).show()
                 parentFragmentManager.popBackStack() // Close the fragment
             } else {
@@ -43,3 +44,4 @@ class AddStudentFragment(private val onStudentAdded: (StudentModel) -> Unit) : F
         return view
     }
 }
+
